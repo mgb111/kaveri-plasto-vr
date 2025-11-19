@@ -149,20 +149,12 @@
       const productPanel = document.createElement('div');
       productPanel.id = 'product-panel';
       productPanel.innerHTML = `
-        <h2>Products on Display</h2>
-        <ul>
-          <li><strong>Product 1</strong> – Heavy-duty plastic container for industrial liquids.</li>
-          <li><strong>Product 2</strong> – Stackable storage drum for bulk materials.</li>
-          <li><strong>Product 3</strong> – Food-grade container for oils and consumables.</li>
-          <li><strong>Product 4</strong> – Compact multi-purpose plastic can for retail use.</li>
-        </ul>
+        <h2>Product Info</h2>
+        <div id="current-product">Tap or click a product to see details.</div>
       `;
       app.appendChild(productPanel);
 
-      const currentProductLabel = document.createElement('div');
-      currentProductLabel.id = 'current-product';
-      currentProductLabel.textContent = 'Currently viewing: Product 1';
-      productPanel.appendChild(currentProductLabel);
+      const currentProductLabel = document.getElementById('current-product');
 
       const zoomControls = document.createElement('div');
       zoomControls.id = 'zoom-controls';
@@ -334,11 +326,11 @@
             scene.add(labelSprite);
 
             // Add a flat branding panel with the Kaveri logo attached to the front of each product
-            const panelGeom = new THREE.PlaneGeometry(1.2, 0.5);
+            const panelGeom = new THREE.PlaneGeometry(1.3, 0.55);
             const panel = new THREE.Mesh(panelGeom, brandingMaterial);
             // Attach to mesh so it always sits on the front face
             mesh.add(panel);
-            panel.position.set(0, 0.1, 0.25); // a bit above center and slightly in front
+            panel.position.set(0, 0.25, 0.35); // centered on front face
           });
           if (isMobile) {
             overlay.textContent = 'Move your phone slowly to look around the gallery in 360°';
@@ -411,7 +403,7 @@
 
       const updateSelectedProductInfo = (index) => {
         const id = index + 1;
-        currentProductLabel.textContent = `Currently viewing: Product ${id} – ${productDescriptions[id]}`;
+        currentProductLabel.textContent = `Product ${id}: ${productDescriptions[id]}`;
       };
 
       const handlePointerFromEvent = (event) => {
@@ -439,6 +431,44 @@
         if (e.touches && e.touches.length > 0) return;
         onSelect(e.changedTouches ? e.changedTouches[0] : e);
       });
+
+      // Pinch-to-zoom on mobile
+      let activeTouches = [];
+      let initialPinchDistance = 0;
+
+      const getDistance = (t1, t2) => {
+        const dx = t1.clientX - t2.clientX;
+        const dy = t1.clientY - t2.clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+      };
+
+      const onTouchStart = (e) => {
+        if (e.touches.length === 2) {
+          activeTouches = [e.touches[0], e.touches[1]];
+          initialPinchDistance = getDistance(activeTouches[0], activeTouches[1]);
+        }
+      };
+
+      const onTouchMove = (e) => {
+        if (e.touches.length === 2 && initialPinchDistance > 0) {
+          const d = getDistance(e.touches[0], e.touches[1]);
+          const delta = initialPinchDistance - d;
+          if (Math.abs(delta) > 2) {
+            applyZoomDelta(delta > 0 ? 1 : -1);
+            initialPinchDistance = d;
+          }
+        }
+      };
+
+      const onTouchEnd = (e) => {
+        if (e.touches.length < 2) {
+          initialPinchDistance = 0;
+        }
+      };
+
+      renderer.domElement.addEventListener('touchstart', onTouchStart, { passive: true });
+      renderer.domElement.addEventListener('touchmove', onTouchMove, { passive: true });
+      renderer.domElement.addEventListener('touchend', onTouchEnd);
 
       const updateCurrentProduct = () => {
         camera.getWorldDirection(dir);
