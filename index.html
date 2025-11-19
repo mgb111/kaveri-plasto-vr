@@ -61,6 +61,42 @@
       #fullscreen-btn span {
         font-size: 14px;
       }
+      #brand-logo {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 11;
+        height: 40px;
+        width: auto;
+        object-fit: contain;
+      }
+      #product-panel {
+        position: absolute;
+        top: 64px;
+        left: 12px;
+        max-width: 260px;
+        padding: 8px 10px;
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 11px;
+        line-height: 1.4;
+        z-index: 11;
+      }
+      #product-panel h2 {
+        margin: 0 0 4px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      #product-panel ul {
+        margin: 0;
+        padding-left: 16px;
+        list-style: disc;
+      }
+      #product-panel li {
+        margin-bottom: 2px;
+      }
     </style>
   </head>
   <body>
@@ -77,6 +113,25 @@
       overlay.id = 'overlay';
       overlay.textContent = 'Loading gallery...';
       app.appendChild(overlay);
+
+      const brandLogo = document.createElement('img');
+      brandLogo.id = 'brand-logo';
+      brandLogo.src = 'https://pub-e46fd816b4ee497fb2f639f180c4df20.r2.dev/kaveri-logo-1.png';
+      brandLogo.alt = 'Kaveri Plasto';
+      app.appendChild(brandLogo);
+
+      const productPanel = document.createElement('div');
+      productPanel.id = 'product-panel';
+      productPanel.innerHTML = `
+        <h2>Products on Display</h2>
+        <ul>
+          <li><strong>Product 1</strong> – Heavy-duty plastic container for industrial liquids.</li>
+          <li><strong>Product 2</strong> – Stackable storage drum for bulk materials.</li>
+          <li><strong>Product 3</strong> – Food-grade container for oils and consumables.</li>
+          <li><strong>Product 4</strong> – Compact multi-purpose plastic can for retail use.</li>
+        </ul>
+      `;
+      app.appendChild(productPanel);
 
       const fullscreenBtn = document.createElement('button');
       fullscreenBtn.id = 'fullscreen-btn';
@@ -181,10 +236,10 @@
           );
 
           const positions = [
-            { x: 0, y: 0, z: -3, rotation: 0 },
-            { x: 3, y: 0, z: 0, rotation: Math.PI / 2 },
-            { x: 0, y: 0, z: 3, rotation: Math.PI },
-            { x: -3, y: 0, z: 0, rotation: -Math.PI / 2 }
+            { x: 0, y: 1.2, z: -3, rotation: 0 }, // Product 1 – front wall
+            { x: 3, y: 1.2, z: 0, rotation: Math.PI / 2 }, // Product 2 – right wall
+            { x: 0, y: 1.2, z: 3, rotation: Math.PI }, // Product 3 – back wall
+            { x: -3, y: 1.2, z: 0, rotation: -Math.PI / 2 } // Product 4 – left wall
           ];
 
           positions.forEach((pos) => {
