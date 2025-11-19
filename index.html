@@ -97,6 +97,13 @@
       #product-panel li {
         margin-bottom: 2px;
       }
+      #current-product {
+        margin-top: 6px;
+        padding-top: 4px;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        font-size: 11px;
+        opacity: 0.9;
+      }
     </style>
   </head>
   <body>
@@ -132,6 +139,11 @@
         </ul>
       `;
       app.appendChild(productPanel);
+
+      const currentProductLabel = document.createElement('div');
+      currentProductLabel.id = 'current-product';
+      currentProductLabel.textContent = 'Currently viewing: Product 1';
+      productPanel.appendChild(currentProductLabel);
 
       const fullscreenBtn = document.createElement('button');
       fullscreenBtn.id = 'fullscreen-btn';
@@ -268,10 +280,34 @@
       };
 
       window.addEventListener('resize', onWindowResize);
+      const dir = new THREE.Vector3();
+
+      const updateCurrentProduct = () => {
+        camera.getWorldDirection(dir);
+        const angle = Math.atan2(dir.x, dir.z); // -PI to PI, z-forward
+
+        let product = 1;
+        // Front (z negative): Product 1
+        // Right (x positive): Product 2
+        // Back (z positive): Product 3
+        // Left (x negative): Product 4
+        if (angle > -Math.PI / 4 && angle <= Math.PI / 4) {
+          product = 3;
+        } else if (angle > Math.PI / 4 && angle <= (3 * Math.PI) / 4) {
+          product = 2;
+        } else if (angle <= -Math.PI / 4 && angle > (-3 * Math.PI) / 4) {
+          product = 4;
+        } else {
+          product = 1;
+        }
+
+        currentProductLabel.textContent = `Currently viewing: Product ${product}`;
+      };
 
       const animate = () => {
         requestAnimationFrame(animate);
         if (controls && controls.update) controls.update();
+        updateCurrentProduct();
         renderer.render(scene, camera);
       };
 
