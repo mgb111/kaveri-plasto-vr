@@ -310,6 +310,7 @@
           const brandingMaterial = new THREE.MeshBasicMaterial({
             map: logoTexture,
             transparent: true,
+            side: THREE.DoubleSide,
           });
 
           const positions = [
@@ -332,13 +333,12 @@
             labelSprite.position.set(pos.x, pos.y + 0.6, pos.z);
             scene.add(labelSprite);
 
-            // Add a flat branding panel with the Kaveri logo slightly in front of each product
-            const panelGeom = new THREE.PlaneGeometry(1.0, 0.4);
+            // Add a flat branding panel with the Kaveri logo attached to the front of each product
+            const panelGeom = new THREE.PlaneGeometry(1.2, 0.5);
             const panel = new THREE.Mesh(panelGeom, brandingMaterial);
-            panel.position.set(pos.x, pos.y + 0.1, pos.z);
-            panel.lookAt(0, pos.y + 0.1, 0);
-            panel.translateZ(0.05);
-            scene.add(panel);
+            // Attach to mesh so it always sits on the front face
+            mesh.add(panel);
+            panel.position.set(0, 0.1, 0.25); // a bit above center and slightly in front
           });
           if (isMobile) {
             overlay.textContent = 'Move your phone slowly to look around the gallery in 360°';
