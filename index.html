@@ -104,6 +104,25 @@
         font-size: 11px;
         opacity: 0.9;
       }
+      #zoom-controls {
+        position: absolute;
+        right: 12px;
+        bottom: 72px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        z-index: 11;
+      }
+      #zoom-controls button {
+        width: 40px;
+        height: 32px;
+        border-radius: 999px;
+        border: none;
+        background: rgba(0, 0, 0, 0.65);
+        color: #fff;
+        font-size: 16px;
+        font-weight: 600;
+      }
     </style>
   </head>
   <body>
@@ -145,6 +164,14 @@
       currentProductLabel.textContent = 'Currently viewing: Product 1';
       productPanel.appendChild(currentProductLabel);
 
+      const zoomControls = document.createElement('div');
+      zoomControls.id = 'zoom-controls';
+      zoomControls.innerHTML = `
+        <button id="zoom-in">+</button>
+        <button id="zoom-out">-</button>
+      `;
+      app.appendChild(zoomControls);
+
       const fullscreenBtn = document.createElement('button');
       fullscreenBtn.id = 'fullscreen-btn';
       fullscreenBtn.innerHTML = '<span>⤢</span> Fullscreen';
@@ -180,6 +207,10 @@
 
       let controls;
       let useDeviceOrientation = isMobile && 'DeviceOrientationEvent' in window;
+
+      const raycaster = new THREE.Raycaster();
+      const pointer = new THREE.Vector2();
+      const selectableObjects = [];
 
       if (useDeviceOrientation) {
         controls = new THREE.DeviceOrientationControls(camera);
@@ -276,12 +307,14 @@
             { x: -3, y: 1.2, z: 0, rotation: -Math.PI / 2, label: 'Product 4' }
           ];
 
-          positions.forEach((pos) => {
+          positions.forEach((pos, index) => {
             const mesh = whiteMeshData.scene.clone();
             mesh.position.set(pos.x, pos.y, pos.z);
             mesh.rotation.y = pos.rotation;
             scene.add(mesh);
             productMeshes.push(mesh);
+
+            selectableObjects.push(mesh);
 
             const labelSprite = createLabelSprite(pos.label);
             labelSprite.position.set(pos.x, pos.y + 0.6, pos.z);
@@ -309,6 +342,84 @@
       window.addEventListener('resize', onWindowResize);
       const dir = new THREE.Vector3();
 
+      const moveState = { forward: false, back: false, left: false, right: false };
+      const moveSpeed = 2.0;
+
+      const onKeyChange = (event, isDown) => {
+        switch (event.code) {
+          case 'KeyW':
+          case 'ArrowUp':
+            moveState.forward = isDown;
+            break;
+          case 'KeyS':
+          case 'ArrowDown':
+            moveState.back = isDown;
+            break;
+          case 'KeyA':
+          case 'ArrowLeft':
+            moveState.left = isDown;
+            break;
+          case 'KeyD':
+          case 'ArrowRight':
+            moveState.right = isDown;
+            break;
+        }
+      };
+
+      window.addEventListener('keydown', (e) => onKeyChange(e, true));
+      window.addEventListener('keyup', (e) => onKeyChange(e, false));
+
+      const zoomInBtn = document.getElementById('zoom-in');
+      const zoomOutBtn = document.getElementById('zoom-out');
+      const minFov = 35;
+      const maxFov = 90;
+
+      const applyZoomDelta = (delta) => {
+        camera.fov = THREE.MathUtils.clamp(camera.fov + delta, minFov, maxFov);
+        camera.updateProjectionMatrix();
+      };
+
+      zoomInBtn.addEventListener('click', () => applyZoomDelta(-5));
+      zoomOutBtn.addEventListener('click', () => applyZoomDelta(5));
+
+      const productDescriptions = {
+        1: 'Heavy-duty plastic container for industrial liquids.',
+        2: 'Stackable storage drum for bulk materials.',
+        3: 'Food-grade container for oils and consumables.',
+        4: 'Compact multi-purpose plastic can for retail use.'
+      };
+
+      const updateSelectedProductInfo = (index) => {
+        const id = index + 1;
+        currentProductLabel.textContent = `Currently viewing: Product ${id} – ${productDescriptions[id]}`;
+      };
+
+      const handlePointerFromEvent = (event) => {
+        const rect = renderer.domElement.getBoundingClientRect();
+        const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+        const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+        pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      };
+
+      const onSelect = (event) => {
+        handlePointerFromEvent(event);
+        raycaster.setFromCamera(pointer, camera);
+        const intersects = raycaster.intersectObjects(selectableObjects, true);
+        if (intersects.length > 0) {
+          const meshIndex = productMeshes.indexOf(intersects[0].object.parent || intersects[0].object);
+          if (meshIndex >= 0) {
+            updateSelectedProductInfo(meshIndex);
+          }
+        }
+      };
+
+      renderer.domElement.addEventListener('click', onSelect);
+      renderer.domElement.addEventListener('touchend', (e) => {
+        if (e.touches && e.touches.length > 0) return;
+        onSelect(e.changedTouches ? e.changedTouches[0] : e);
+      });
+
       const updateCurrentProduct = () => {
         camera.getWorldDirection(dir);
         const angle = Math.atan2(dir.x, dir.z); // -PI to PI, z-forward
@@ -328,11 +439,38 @@
           product = 1;
         }
 
-        currentProductLabel.textContent = `Currently viewing: Product ${product}`;
+        if (!Number.isNaN(product)) {
+          currentProductLabel.textContent = `Currently viewing: Product ${product}`;
+        }
       };
+      const clock = new THREE.Clock();
 
       const animate = () => {
         requestAnimationFrame(animate);
+        const delta = clock.getDelta();
+
+        if (moveState.forward || moveState.back || moveState.left || moveState.right) {
+          const moveDir = new THREE.Vector3();
+          camera.getWorldDirection(moveDir);
+          moveDir.y = 0;
+          moveDir.normalize();
+          const right = new THREE.Vector3().crossVectors(moveDir, new THREE.Vector3(0, 1, 0)).normalize();
+
+          let moveVector = new THREE.Vector3();
+          if (moveState.forward) moveVector.add(moveDir);
+          if (moveState.back) moveVector.sub(moveDir);
+          if (moveState.left) moveVector.sub(right);
+          if (moveState.right) moveVector.add(right);
+
+          if (moveVector.lengthSq() > 0) {
+            moveVector.normalize().multiplyScalar(moveSpeed * delta);
+            camera.position.add(moveVector);
+            if (controls && controls.target) {
+              controls.target.add(moveVector);
+            }
+          }
+        }
+
         if (controls && controls.update) controls.update();
         updateCurrentProduct();
         renderer.render(scene, camera);
