@@ -66,12 +66,11 @@
   <body>
     <div id="app"></div>
 
-    <script type="module">
-      import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
-      import { OrbitControls } from 'https://unpkg.com/three@0.128.0/examples/jsm/controls/OrbitControls.js';
-      import { DeviceOrientationControls } from 'https://unpkg.com/three@0.128.0/examples/jsm/controls/DeviceOrientationControls.js';
-      import { GLTFLoader } from 'https://unpkg.com/three@0.128.0/examples/jsm/loaders/GLTFLoader.js';
-
+    <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/DeviceOrientationControls.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script>
       const app = document.getElementById('app');
 
       const overlay = document.createElement('div');
@@ -116,7 +115,7 @@
       let useDeviceOrientation = isMobile && 'DeviceOrientationEvent' in window;
 
       if (useDeviceOrientation) {
-        controls = new DeviceOrientationControls(camera);
+        controls = new THREE.DeviceOrientationControls(camera);
         overlay.textContent = 'Move your phone to look around the gallery in 360°';
 
         if (
@@ -139,7 +138,7 @@
           overlay.appendChild(button);
         }
       } else {
-        controls = new OrbitControls(camera, renderer.domElement);
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
         controls.enableZoom = true;
@@ -162,17 +161,22 @@
       directionalLight2.position.set(-5, 5, -5);
       scene.add(directionalLight2);
 
-      const loader = new GLTFLoader();
+      const loader = new THREE.GLTFLoader();
 
       const loadModels = async () => {
         try {
-          const galleryData = await loader.loadAsync(
+          const loadGLTF = (url) =>
+            new Promise((resolve, reject) => {
+              loader.load(url, (gltf) => resolve(gltf), undefined, reject);
+            });
+
+          const galleryData = await loadGLTF(
             'https://pub-e46fd816b4ee497fb2f639f180c4df20.r2.dev/art_gallery.glb'
           );
           const gallery = galleryData.scene;
           scene.add(gallery);
 
-          const whiteMeshData = await loader.loadAsync(
+          const whiteMeshData = await loadGLTF(
             'https://pub-e46fd816b4ee497fb2f639f180c4df20.r2.dev/white_mesh.glb'
           );
 
