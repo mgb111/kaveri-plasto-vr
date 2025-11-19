@@ -142,8 +142,7 @@
 
       const brandLogo = document.createElement('img');
       brandLogo.id = 'brand-logo';
-      // Use local asset to avoid CORS issues
-      brandLogo.src = 'kaveri-logo-1.png';
+      brandLogo.src = 'https://pub-e46fd816b4ee497fb2f639f180c4df20.r2.dev/kaveri-logo-1.png';
       brandLogo.alt = 'Kaveri Plasto';
       app.appendChild(brandLogo);
 
@@ -297,8 +296,9 @@
             'https://pub-e46fd816b4ee497fb2f639f180c4df20.r2.dev/white_mesh.glb'
           );
 
-          // Load the same local logo texture for 3D branding panels (no CORS)
-          const logoTexture = textureLoader.load('kaveri-logo-1.png');
+          const logoTexture = textureLoader.load(
+            'https://pub-e46fd816b4ee497fb2f639f180c4df20.r2.dev/kaveri-logo-1.png'
+          );
           const brandingMaterial = new THREE.MeshBasicMaterial({
             map: logoTexture,
             transparent: true,
@@ -323,9 +323,9 @@
             selectableObjects.push(mesh);
 
             const labelSprite = createLabelSprite(pos.label);
-            // Pull labels slightly towards the center so they appear more in the middle of the view
-            const labelX = pos.x * 0.7;
-            const labelZ = pos.z * 0.7;
+            // Pull labels further towards the center so they appear more in the middle of the view
+            const labelX = pos.x * 0.4;
+            const labelZ = pos.z * 0.4;
             labelSprite.position.set(labelX, pos.y + 0.6, labelZ);
             scene.add(labelSprite);
 
