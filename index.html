@@ -266,16 +266,38 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '20px system-ui';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+        // Draw Kaveri logo above the product text
+        const logoImg = new Image();
+        logoImg.crossOrigin = 'anonymous';
+        logoImg.src = 'https://pub-e46fd816b4ee497fb2f639f180c4df20.r2.dev/kaveri-logo-1.png';
 
         const texture = new THREE.CanvasTexture(canvas);
+
+        logoImg.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          const logoWidth = 96;
+          const logoHeight = 32;
+          const logoX = (canvas.width - logoWidth) / 2;
+          const logoY = 4;
+          ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
+
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '18px system-ui';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(text, canvas.width / 2, canvas.height - 16);
+
+          texture.needsUpdate = true;
+        };
+
         const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
         const sprite = new THREE.Sprite(material);
-        sprite.scale.set(1.2, 0.3, 1);
+        // Make the tag a little smaller
+        sprite.scale.set(0.9, 0.25, 1);
         return sprite;
       };
 
