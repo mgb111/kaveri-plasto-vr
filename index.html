@@ -307,6 +307,10 @@
           const logoTexture = textureLoader.load(
             'https://pub-e46fd816b4ee497fb2f639f180c4df20.r2.dev/kaveri-logo-1.png'
           );
+          const brandingMaterial = new THREE.MeshBasicMaterial({
+            map: logoTexture,
+            transparent: true,
+          });
 
           const positions = [
             { x: 0, y: 1.2, z: -3, rotation: 0, label: 'Product 1' },
@@ -317,14 +321,6 @@
 
           positions.forEach((pos, index) => {
             const mesh = whiteMeshData.scene.clone();
-            // Apply branding texture to all mesh materials
-            mesh.traverse((child) => {
-              if (child.isMesh && child.material) {
-                child.material = child.material.clone();
-                child.material.map = logoTexture;
-                child.material.needsUpdate = true;
-              }
-            });
             mesh.position.set(pos.x, pos.y, pos.z);
             mesh.rotation.y = pos.rotation;
             scene.add(mesh);
@@ -335,6 +331,14 @@
             const labelSprite = createLabelSprite(pos.label);
             labelSprite.position.set(pos.x, pos.y + 0.6, pos.z);
             scene.add(labelSprite);
+
+            // Add a flat branding panel with the Kaveri logo slightly in front of each product
+            const panelGeom = new THREE.PlaneGeometry(1.0, 0.4);
+            const panel = new THREE.Mesh(panelGeom, brandingMaterial);
+            panel.position.set(pos.x, pos.y + 0.1, pos.z);
+            panel.lookAt(0, pos.y + 0.1, 0);
+            panel.translateZ(0.05);
+            scene.add(panel);
           });
           if (isMobile) {
             overlay.textContent = 'Move your phone slowly to look around the gallery in 360°';
