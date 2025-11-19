@@ -245,6 +245,9 @@
         controls.maxDistance = 10;
         controls.minPolarAngle = Math.PI * 0.2;
         controls.maxPolarAngle = Math.PI * 0.8;
+        // Start from center, looking towards Product 1 on the front wall (z negative)
+        controls.target.set(0, 1.2, -3);
+        controls.update();
         overlay.textContent = 'Click and drag to look around • Scroll to zoom';
       }
 
@@ -260,6 +263,7 @@
       scene.add(directionalLight2);
 
       const loader = new THREE.GLTFLoader();
+      const textureLoader = new THREE.TextureLoader();
       const productMeshes = [];
 
       const createLabelSprite = (text) => {
@@ -300,6 +304,10 @@
             'https://pub-e46fd816b4ee497fb2f639f180c4df20.r2.dev/white_mesh.glb'
           );
 
+          const logoTexture = textureLoader.load(
+            'https://pub-e46fd816b4ee497fb2f639f180c4df20.r2.dev/kaveri-logo-1.png'
+          );
+
           const positions = [
             { x: 0, y: 1.2, z: -3, rotation: 0, label: 'Product 1' },
             { x: 3, y: 1.2, z: 0, rotation: Math.PI / 2, label: 'Product 2' },
@@ -309,6 +317,14 @@
 
           positions.forEach((pos, index) => {
             const mesh = whiteMeshData.scene.clone();
+            // Apply branding texture to all mesh materials
+            mesh.traverse((child) => {
+              if (child.isMesh && child.material) {
+                child.material = child.material.clone();
+                child.material.map = logoTexture;
+                child.material.needsUpdate = true;
+              }
+            });
             mesh.position.set(pos.x, pos.y, pos.z);
             mesh.rotation.y = pos.rotation;
             scene.add(mesh);
